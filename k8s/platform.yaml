@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Namespace
+metadata: {name: autoscaling}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: demo-api, namespace: autoscaling}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: demo-api}}
+  template:
+    metadata: {labels: {app: demo-api}}
+    spec:
+      containers:
+        - name: api
+          image: registry.k8s.io/hpa-example:latest
+          ports: [{name: http, containerPort: 80}]
+          resources:
+            requests: {cpu: 100m, memory: 32Mi}
+            limits: {cpu: 500m, memory: 128Mi}
+          readinessProbe:
+            httpGet: {path: /, port: http}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: demo-api, namespace: autoscaling}
+spec:
+  selector: {app: demo-api}
+  ports: [{name: http, port: 80, targetPort: http}]
